@@ -7,5 +7,10 @@
   },
   "private": true,
   "type": "module",
-  "description": "Groups forge tooling that is not specific to git. Use when adding support for a software forge concept independent of the version control system."
+  "description": "Groups forge tooling that is not specific to git. Use when adding support for a software forge concept independent of the version control system.",
+  "license": "MIT",
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/561-group/.github/blob/main/TIPS.md"
+  }
 }
