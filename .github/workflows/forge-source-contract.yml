@@ -6,14 +6,6 @@ on:
       - "test/**"
       - "package.json"
       - ".github/workflows/forge-source-contract.yml"
-  push:
-    branches:
-      - "feat/signcraft-to-forge-source-candidates-20261022"
-    paths:
-      - "src/**"
-      - "test/**"
-      - "package.json"
-      - ".github/workflows/forge-source-contract.yml"
 permissions:
   contents: read
 concurrency:
@@ -36,3 +28,5 @@ jobs:
         run: |
           npm run check
           npm test
+      - name: Verify internal package layout without publishing
+        run: npm pack --dry-run --ignore-scripts
