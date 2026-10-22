@@ -1,11 +1,11 @@
 {
   "name": "@red-cup-engineering/software-forge-services-section",
-  "version": "0.1.0",
+  "version": "0.2.0-dev.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/software-forge-services-section.git"
   },
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Engineering forge boundary: source-qualified, effect-free code artifact candidates downstream of SignCraft, upstream of Git and provider-specific forge tools.",
   "license": "MIT",
@@ -23,10 +23,18 @@
   "scripts": {
     "check": "node --check src/source-candidate.mjs && node --check src/signcraft-source.mjs && node --check test/source-candidate.test.mjs",
     "test": "node --test test/source-candidate.test.mjs",
-    "verify": "npm run check && npm test"
+    "verify": "npm run check && npm test",
+    "prepublishOnly": "npm run verify"
   },
   "files": [
     "src",
     "README.md"
-  ]
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "publishConfig": {
+    "registry": "https://registry.561.group/",
+    "tag": "next"
+  }
 }
