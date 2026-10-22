@@ -8,6 +8,7 @@
  * The exact code-producing operation, tests, original Work and consumers remain
  * independently accountable.
  */
+import {createHash} from "node:crypto";
 const SHA = /^[0-9a-f]{40}$/u;
 const REPO = /^[a-z0-9][a-z0-9.-]*\/[a-z0-9][a-z0-9._-]*$/u;
 const PATH = /^(?!\/)(?!.*\/\/)[A-Za-z0-9._\/-]+$/u;
@@ -74,6 +75,7 @@ export function forgeSourceCandidate({synthesis, signcraftSource, workRef, artif
     workRef,
     signcraft:Object.freeze({source:Object.freeze({...signcraftSource}),construction:Object.freeze(constructed)}),
     artifact:Object.freeze({path:artifact.path,content:artifact.content,
+      contentSha256:createHash("sha256").update(artifact.content,"utf8").digest("hex"),
       producer:Object.freeze({...artifact.producer})}),
     receiving:Object.freeze({
       originalSigncraftSource:"declared-not-independently-checked",
