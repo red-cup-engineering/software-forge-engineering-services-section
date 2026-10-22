@@ -28,5 +28,20 @@ jobs:
         run: |
           npm run check
           npm test
+      - name: Read exact upstream SignCraft source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: red-cup-engineering/signcraft
+          ref: 84ca51d35a7749eb4dc86e2f6845b71ae910940d
+          path: signcraft-pinned
+          persist-credentials: false
+      - name: Run native SignCraft synthesis through Software Forge
+        run: |
+          set -euo pipefail
+          test "$(git -C signcraft-pinned rev-parse HEAD)" = "84ca51d35a7749eb4dc86e2f6845b71ae910940d"
+          npm install --prefix signcraft-pinned --ignore-scripts --no-package-lock --no-audit --no-fund --registry=https://registry.561.group/
+          mkdir -p node_modules/@red-cup-engineering
+          ln -s "$GITHUB_WORKSPACE/signcraft-pinned" node_modules/@red-cup-engineering/signcraft
+          node --test test/signcraft-native-integration.test.mjs
       - name: Verify internal package layout without publishing
         run: npm pack --dry-run --ignore-scripts
