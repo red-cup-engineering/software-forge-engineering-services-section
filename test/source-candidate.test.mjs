@@ -63,6 +63,8 @@ test("adverse path and size refuse before any file, branch or external effect",(
     const x=input();x.artifact.path=path;
     assert.throws(()=>forgeSourceCandidate(x),/code artifact/u);
   }
+  const blank=input();blank.artifact.content="  ";
+  assert.throws(()=>forgeSourceCandidate(blank),/code artifact/u);
   const large=input();large.artifact.content="x".repeat(1_000_001);
   assert.throws(()=>forgeSourceCandidate(large),/code artifact/u);
 });
