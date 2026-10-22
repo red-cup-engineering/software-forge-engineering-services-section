@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {forgeSourceCandidate} from "../src/source-candidate.mjs";
+import {createHash} from "node:crypto";
 
 const a="a".repeat(40), b="b".repeat(40);
 const input=()=>({
@@ -27,12 +28,25 @@ test("genuine SignCraft result shape binds the original provisional artifact, no
   assert.equal(out.workRef,x.workRef);
   assert.equal(out.signcraft.construction.kind,"signcraft.semioticSynthesis.v1");
   assert.deepEqual(out.signcraft.source,x.signcraftSource);
-  assert.deepEqual(out.artifact,x.artifact);
+  assert.equal(out.artifact.path,x.artifact.path);
+  assert.equal(out.artifact.content,x.artifact.content);
+  assert.deepEqual(out.artifact.producer,x.artifact.producer);
+  assert.equal(out.artifact.contentSha256,createHash("sha256").update(x.artifact.content,"utf8").digest("hex"));
   assert.deepEqual(x,snapshot,"no source mutation");
   assert.deepEqual(out.effects,[]);
   assert.equal(out.receiving.installedConsumer,"not-observed");
   assert.equal(out.receiving.nativeVerification,"not-observed");
   assert.ok(!Object.hasOwn(out,"approval"));
+});
+test("UTF-8 artifact digest comes from the actual bytes, not a caller-supplied hash",()=>{
+  const x=input();x.artifact.content="export const greeting='wíŋyaŋ';\\n";
+  const a=forgeSourceCandidate(x);
+  const old=forgeSourceCandidate(input());
+  assert.match(a.artifact.contentSha256,/^[0-9a-f]{64}$/u);
+  assert.notEqual(a.artifact.contentSha256,old.artifact.contentSha256);
+  assert.equal(a.artifact.contentSha256,createHash("sha256").update(x.artifact.content).digest("hex"));
+  x.artifact.contentSha256="0".repeat(64);
+  assert.throws(()=>forgeSourceCandidate(x),/source-authored code artifact/u);
 });
 test("unfinished, truncated or contested hypothetical syntheses cannot become forge artifacts",()=>{
   for (const change of [
