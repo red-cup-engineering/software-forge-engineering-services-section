@@ -59,7 +59,8 @@ export function forgeSourceCandidate({synthesis, signcraftSource, workRef, artif
       !named(artifact.path) || !PATH.test(artifact.path) ||
       artifact.path.split("/").some(p=>p==="."||p===".."||p==="") ||
       /^(?:\.git(?:\/|$)|\.github\/(?:workflows|CODEOWNERS|dependabot\.ya?ml)(?:\/|$))/iu.test(artifact.path) ||
-      typeof artifact.content !== "string" || Buffer.byteLength(artifact.content)>1_000_000 ||
+      typeof artifact.content !== "string" || !artifact.content.trim() ||
+      Buffer.byteLength(artifact.content)>1_000_000 ||
       !only(artifact.producer,["repository","commitSha","sourceRef"]) ||
       !REPO.test(artifact.producer.repository) ||
       !SHA.test(artifact.producer.commitSha) ||
