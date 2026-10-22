@@ -1,0 +1,38 @@
+name: Forge source contract
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "test/**"
+      - "package.json"
+      - ".github/workflows/forge-source-contract.yml"
+  push:
+    branches:
+      - "feat/signcraft-to-forge-source-candidates-20261022"
+    paths:
+      - "src/**"
+      - "test/**"
+      - "package.json"
+      - ".github/workflows/forge-source-contract.yml"
+permissions:
+  contents: read
+concurrency:
+  group: forge-source-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Read exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Use Node 22
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: '22'
+      - name: Validate and test pure source contract
+        run: |
+          npm run check
+          npm test
