@@ -49,7 +49,7 @@ imagined semiotic step, nor can it manufacture a GitHub authorization.
 consumer, source pin and the intermediate Git Forge custody have independent
 receiving. Creating a second Gitlink, moving/deleting the existing one, or
 claiming a published installed package is deliberately not part of this
-source-only candidate. Current source declares SignCraft `0.5.6`; its actual
+source-only candidate. This branch stages an unpublished `0.2.0-dev.0` package for `registry.561.group` under the non-default `next` tag, guarded by `prepublishOnly: npm run verify`. It still declares SignCraft `0.5.6`; its actual
 registry artifact, dependency closure and selected runtime are independent
 release tests. Run `node --test test/source-candidate.test.mjs` against this
 source for the dependency-free native contract, and then obtain a pinned
