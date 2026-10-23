@@ -82,3 +82,40 @@ test("adverse path and size refuse before any file, branch or external effect",(
   const large=input();large.artifact.content="x".repeat(1_000_001);
   assert.throws(()=>forgeSourceCandidate(large),/code artifact/u);
 });
+
+test("source candidate permanently retains every nested SignCraft step and projected reading",()=>{
+  const initial=input(),original=structuredClone(initial),result=forgeSourceCandidate(initial);
+  const received=result.signcraft.construction;
+  const unchanged=structuredClone(received);
+  assert.equal(Object.isFrozen(received),true);
+  for(const fragment of [received.requirements,received.exclusions,received.steps,
+    received.steps[0],received.steps[0].question,received.steps[0].question.prerequisites,
+    received.steps[0].changed,received.projectedReadings,received.projectedReadings[0]])
+    assert.equal(Object.isFrozen(fragment),true,"each retained original source fragment is immutable");
+  assert.throws(()=>received.steps[0].changed.push("fabricated-evidence"),TypeError);
+  assert.throws(()=>received.steps[0].question.prerequisites.push("fabricated-precondition"),TypeError);
+  assert.throws(()=>{received.projectedReadings[0].reading="active";},TypeError);
+  assert.throws(()=>{received.requirements[0]="substituted-goal";},TypeError);
+  initial.synthesis.steps[0].changed.push("provider-edited-after-return");
+  initial.synthesis.projectedReadings[0].reading="denied";
+  assert.deepEqual(received,unchanged,"a later provider edit cannot change the retained receiving source");
+  assert.equal(received.steps[0].changed.length,original.synthesis.steps[0].changed.length);
+  assert.deepEqual(result.effects,[]);
+  assert.equal(result.receiving.beneficiary,"not-observed",
+    "an immutable counterfactual is not an independently accepted code artifact");
+});
+
+test("nonportable, cyclic, nonfinite and unbounded source constructions refuse before Git custody",()=>{
+  const exotic=input();exotic.synthesis.steps[0].question.arbitrary=new Map([["hidden","unreplayable"]]);
+  assert.throws(()=>forgeSourceCandidate(exotic),/bounded acyclic portable value/u);
+  const cyclic=input();cyclic.synthesis.steps[0].question.loop=cyclic.synthesis.steps[0].question;
+  assert.throws(()=>forgeSourceCandidate(cyclic),/bounded acyclic portable value/u);
+  const nonfinite=input();nonfinite.synthesis.projectedReadings[0].reading=Infinity;
+  assert.throws(()=>forgeSourceCandidate(nonfinite),/bounded acyclic portable value/u);
+  const tooLarge=input();tooLarge.synthesis.note="x".repeat(260_000);
+  assert.throws(()=>forgeSourceCandidate(tooLarge),/bounded portable source cut/u);
+  const excessiveDepth=input();let part=excessiveDepth.synthesis.steps[0].question;
+  for(let i=0;i<40;i++){part.more={};part=part.more;}
+  assert.throws(()=>forgeSourceCandidate(excessiveDepth),/bounded acyclic portable value/u);
+  const normal=input();assert.equal(forgeSourceCandidate(normal).kind,"software-forge.source-candidate.v1");
+});
