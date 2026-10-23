@@ -23,6 +23,34 @@ const plain = x => x !== null && typeof x === "object" && !Array.isArray(x);
 const only = (x, names) => plain(x) && Object.keys(x).every(k => names.includes(k));
 const refused = code => Object.freeze({kind:"software-forge.refusal.v1",code,effects:Object.freeze([])});
 
+/** Retain one finite, serializable counterfactual before another source owner
+ * reads it. A frozen wrapper around mutable nested steps is not a fixed
+ * witness; the original SignCraft synthesis remains a proposal, not authority.
+ * This does not introduce another SignCell identity or work journal. */
+function retainConstruction(original) {
+  const copy = structuredClone(original);
+  const active = new WeakSet(), complete = new WeakSet();
+  let nodes = 0;
+  const freeze = (value, depth) => {
+    if (value === null || typeof value === "string" || typeof value === "boolean" ||
+        (typeof value === "number" && Number.isFinite(value))) return;
+    if (typeof value !== "object" || depth > 32 || ++nodes > 8192 ||
+        active.has(value) ||
+        (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype))
+      throw new TypeError("software forge: construction must be a bounded acyclic portable value");
+    if (complete.has(value)) return;
+    active.add(value);
+    for (const child of Object.values(value)) freeze(child, depth + 1);
+    active.delete(value);
+    complete.add(value);
+    Object.freeze(value);
+  };
+  freeze(copy, 0);
+  if (Buffer.byteLength(JSON.stringify(copy), "utf8") > 256_000)
+    throw new TypeError("software forge: construction exceeds the bounded portable source cut");
+  return copy;
+}
+
 export function forgeSourceCandidate({synthesis, signcraftSource, workRef, artifact}) {
   if (!only(signcraftSource,["repository","commitSha","exportPath"]) ||
       signcraftSource.repository !== "red-cup-engineering/signcraft" ||
@@ -68,7 +96,7 @@ export function forgeSourceCandidate({synthesis, signcraftSource, workRef, artif
       !named(artifact.producer.sourceRef))
     throw new TypeError("source-authored code artifact and pinned producer required");
 
-  const constructed = structuredClone(synthesis);
+  const constructed = retainConstruction(synthesis);
   return Object.freeze({
     kind:"software-forge.source-candidate.v1",
     admission:"provisional-source-candidate",
