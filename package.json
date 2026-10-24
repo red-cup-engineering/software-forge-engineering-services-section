@@ -1,9 +1,9 @@
 {
-  "name": "@red-cup-engineering/software-forge-services-section",
+  "name": "@red-cup-engineering/software-forge-engineering-services-section",
   "version": "0.2.0-dev.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/red-cup-engineering/software-forge-services-section.git"
+    "url": "git+https://github.com/red-cup-engineering/software-forge-engineering-services-section.git"
   },
   "private": false,
   "type": "module",
