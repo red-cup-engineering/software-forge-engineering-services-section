@@ -24,7 +24,7 @@ AOE original Work, Git Services or the GitHub review/estate provider.
    result, qualified source locator, original Work identity and **separately
    authored code artifact** with its producing source revision. It rejects
    incomplete, truncated or exclusion-violating constructions and unsafe paths.
-3. The existing [Git Forge section](https://github.com/red-cup-engineering/git-forge-services-section)
+3. The existing [Git Forge section](https://github.com/red-cup-engineering/git-forge-engineering-services-section)
    owns the Git-specific proposed-ref and exact-base boundary. It must retain
    current source/branch evidence and may not treat an intermediate packet as
    a performed Git commit.
