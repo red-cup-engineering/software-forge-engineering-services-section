@@ -3,7 +3,7 @@
  * constructions and an independently fabricated code artifact. Neither an
  * imagined SignCraft step nor a source-author's testimony licenses a Git write.
  *
- * Selected upstream shape: @red-cup-engineering/signcraft 0.5.6
+ * Selected upstream shape: @red-cup-engineering/signcraft 0.6.1-dev.508
  *   synthesize(...) -> signcraft.semioticSynthesis.v1
  * The exact code-producing operation, tests, original Work and consumers remain
  * independently accountable.

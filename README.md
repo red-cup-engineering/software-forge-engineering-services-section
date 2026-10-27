@@ -49,11 +49,36 @@ imagined semiotic step, nor can it manufacture a GitHub authorization.
 consumer, source pin and the intermediate Git Forge custody have independent
 receiving. Creating a second Gitlink, moving/deleting the existing one, or
 claiming a published installed package is deliberately not part of this
-source-only candidate. This branch stages an unpublished `0.2.0-dev.0` package for `registry.561.group` under the non-default `next` tag, guarded by `prepublishOnly: npm run verify`. It still declares SignCraft `0.5.6`; its actual
-registry artifact, dependency closure and selected runtime are independent
-release tests. Run `node --test test/source-candidate.test.mjs` against this
-source for the dependency-free native contract, and then obtain a pinned
-SignCraft install to test the real `./signcraft-source` adapter.
+source-only candidate. The current source declares `0.3.0-dev.0` for
+`registry.561.group` under the non-default `next` tag, with SignCraft
+`0.6.1-dev.508` and Social Publication `0.3.0-dev.0`. Its prepublish gate runs
+the pure contract and both native integration suites. Registry publication,
+consumer installation and beneficiary receiving require their own receipts;
+the presence of this source does not establish those events. Run
+`node --test test/source-candidate.test.mjs` for the dependency-free contract;
+the remaining tests require the exact declared suppliers.
 
 The original corporate Work is
 `ni:///sha-256;N2B0dn3jHK7-wH7j6URwNpu2C0ofnY9zWH6saAYxI7w`.
+
+## Community requirements become source work
+
+`./community-work-order` translates a source-replayed Social Publication
+assessment into a native Cell work order for an unopposed unmet requirement.
+It preserves the original requirement, observation evidence, Work reference,
+exact repository revision and proposed file path. README, CONTRIBUTING and
+license requirements admit their corresponding file paths. Custom source
+requirements must declare an exact `sourceContract`; provider metadata such as
+repository topics and descriptions remains with the provider operation owner.
+
+`./community-source-candidate` calls the actual SignCraft synthesis operation
+and the established `forgeSourceCandidate`, using an independently produced
+Code artifact. Its `candidate` member retains the original shape consumed by
+Git Forge. A complete hypothetical construction is a source proposal;
+acceptance still requires reobserving the same community requirement.
+
+The native integration test uses executable JavaScript produced by the existing
+Code owner's `renderJsonSchemaModule`, with its exact producing commit, source
+blob and output digest retained. It exercises source identity and construction
+without claiming that the artifact has been installed or that a community
+outcome has occurred. See [the operation contract](docs/community-source-work.md).

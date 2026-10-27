@@ -5,7 +5,7 @@ import {makeMachineState} from "@red-cup-engineering/signcraft/inference/kernel"
 import {withReading,readingAt} from "@red-cup-engineering/signcraft/inference/nuclei";
 import {synthesizeForgeSource} from "../src/signcraft-source.mjs";
 
-const actualSigncraftCommit = "84ca51d35a7749eb4dc86e2f6845b71ae910940d";
+const actualSigncraftCommit = "0257d0b3719d95f3b4649610bd5839ccbd6e914d";
 const producerCommit = "a".repeat(40);
 const workRef = "ni:///sha-256;N2B0dn3jHK7-wH7j6URwNpu2C0ofnY9zWH6saAYxI7w";
 const field = () => makeMachineState({

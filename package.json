@@ -1,6 +1,6 @@
 {
   "name": "@red-cup-engineering/software-forge-services-section",
-  "version": "0.2.0-dev.0",
+  "version": "0.3.0-dev.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/software-forge-engineering-services-section.git"
@@ -15,21 +15,26 @@
   },
   "exports": {
     "./source-candidate": "./src/source-candidate.mjs",
-    "./signcraft-source": "./src/signcraft-source.mjs"
+    "./signcraft-source": "./src/signcraft-source.mjs",
+    "./community-work-order": "./src/community-work-order.mjs",
+    "./community-source-candidate": "./src/community-source-candidate.mjs"
   },
   "dependencies": {
-    "@red-cup-engineering/signcraft": "0.5.6"
+    "@red-cup-engineering/signcraft": "0.6.1-dev.508",
+    "@red-cup-engineering/social-publication-services-section": "0.3.0-dev.0"
   },
   "scripts": {
-    "check": "node --check src/source-candidate.mjs && node --check src/signcraft-source.mjs && node --check test/source-candidate.test.mjs && node --check test/signcraft-native-integration.test.mjs",
+    "check": "node --check src/source-candidate.mjs && node --check src/signcraft-source.mjs && node --check test/source-candidate.test.mjs && node --check test/signcraft-native-integration.test.mjs && node --check src/community-work-order.mjs && node --check src/community-source-candidate.mjs && node --check test/community-work-order.test.mjs",
     "test": "node --test test/source-candidate.test.mjs",
     "verify": "npm run check && npm test",
-    "prepublishOnly": "npm run verify && npm run test:signcraft-integration",
-    "test:signcraft-integration": "node --test test/signcraft-native-integration.test.mjs"
+    "prepublishOnly": "npm run verify && npm run test:signcraft-integration && npm run test:community",
+    "test:signcraft-integration": "node --test test/signcraft-native-integration.test.mjs",
+    "test:community": "node --test test/community-work-order.test.mjs"
   },
   "files": [
     "src",
-    "README.md"
+    "README.md",
+    "docs"
   ],
   "engines": {
     "node": ">=22.18"

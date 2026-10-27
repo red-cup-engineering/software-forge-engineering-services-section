@@ -1,0 +1,42 @@
+{
+  "producer": {
+    "repository": "red-cup-engineering/javascript-node-code-fabrication-engineering-services-section",
+    "commitSha": "a7ca951203226abd804c8c0110b7ab9ed79d1110",
+    "sourceRef": "scripts/transform-json-schema-to-typescript.mjs@24c2000f79b8a4b941c5d0f7279afa7b1b4dea8b"
+  },
+  "input": [
+    {
+      "exportName": "contributionContractSchema",
+      "typeName": "ContributionContract",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "urn:561:forge:contribution-contract:1",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requirementId",
+          "supportUrl",
+          "verificationCommand"
+        ],
+        "properties": {
+          "requirementId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "supportUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "verificationCommand": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  ],
+  "options": {
+    "format": "javascript"
+  },
+  "contentSha256": "b0c347d8a03fe0d3206684466a1670df372778501b1b398dfd3f480407793cd2"
+}
