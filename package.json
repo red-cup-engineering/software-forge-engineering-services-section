@@ -1,6 +1,6 @@
 {
   "name": "@red-cup-engineering/software-forge-services-section",
-  "version": "0.3.0-dev.0",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/red-cup-engineering/software-forge-engineering-services-section.git"
@@ -20,8 +20,8 @@
     "./community-source-candidate": "./src/community-source-candidate.mjs"
   },
   "dependencies": {
-    "@red-cup-engineering/signcraft": "0.6.1-dev.508",
-    "@red-cup-engineering/social-publication-services-section": "0.3.0-dev.0"
+    "@red-cup-engineering/signcraft": "0.6.2",
+    "@red-cup-engineering/social-publication-services-section": "0.3.0"
   },
   "scripts": {
     "check": "node --check src/source-candidate.mjs && node --check src/signcraft-source.mjs && node --check test/source-candidate.test.mjs && node --check test/signcraft-native-integration.test.mjs && node --check src/community-work-order.mjs && node --check src/community-source-candidate.mjs && node --check test/community-work-order.test.mjs",
