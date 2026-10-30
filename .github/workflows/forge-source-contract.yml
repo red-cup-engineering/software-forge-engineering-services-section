@@ -48,15 +48,25 @@ jobs:
           npm view @red-cup-engineering/signcraft@0.6.2 version --registry=https://registry.561.group/
           npm view @red-cup-engineering/social-publication-services-section@0.3.0 version --registry=https://registry.561.group/
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock --registry=https://registry.561.group/
-          node -e "const m=require('./package.json'); const p=require('./node_modules/@red-cup-engineering/signcraft/package.json'); if(p.name!=='@red-cup-engineering/signcraft'||p.version!==m.dependencies[p.name]||!(/^[0-9a-f]{40}$/u.test(p.gitHead||''))) process.exit(1)"
+          node -e "const m=require('./package.json'); const p=require('./node_modules/@red-cup-engineering/signcraft/package.json'); if(p.name!=='@red-cup-engineering/signcraft'||p.version!==m.dependencies[p.name]) throw new Error('SignCraft installed package does not match the declared dependency')"
           node -e "const m=require('./package.json'); const p=require('./node_modules/@red-cup-engineering/social-publication-services-section/package.json'); if(p.name!=='@red-cup-engineering/social-publication-services-section'||p.version!==m.dependencies[p.name]) process.exit(1)"
           # Source-owned Git blobs independently checked against the original
           # SignCraft 0.6.2 release-source commits (43cc43c and b0af25e).
           # Keep exact-byte checks: package version alone is not provenance.
-          test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/inference/generate.mjs)" = "24ee356f70183024f9cf15d192162442a06ac287"
-          test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/inference/kernel.mjs)" = "d8445885b17b3b4f4d711e6844a6a7089e27e02b"
-          test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/inference/nuclei.mjs)" = "cfb08de27bfb51f91f91fa64cde138da3a4fc4cc"
-          test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/cell.mjs)" = "40d7d947430ad944f9baa2172c34cfceb1abdd41"
+          # npm's gitHead metadata may be absent: Git tree bytes, not a
+          # self-reported publisher field, are the original source assay.
+          assert_source_blob() {
+            local file="$1" expected="$2" observed
+            observed="$(git hash-object "$file")"
+            if [ "$observed" != "$expected" ]; then
+              printf 'SOURCE_IDENTITY_MISMATCH %s expected=%s observed=%s\\n' "$file" "$expected" "$observed" >&2
+              return 1
+            fi
+          }
+          assert_source_blob node_modules/@red-cup-engineering/signcraft/src/inference/generate.mjs 24ee356f70183024f9cf15d192162442a06ac287
+          assert_source_blob node_modules/@red-cup-engineering/signcraft/src/inference/kernel.mjs d8445885b17b3b4f4d711e6844a6a7089e27e02b
+          assert_source_blob node_modules/@red-cup-engineering/signcraft/src/inference/nuclei.mjs cfb08de27bfb51f91f91fa64cde138da3a4fc4cc
+          assert_source_blob node_modules/@red-cup-engineering/signcraft/src/cell.mjs 40d7d947430ad944f9baa2172c34cfceb1abdd41
           # Original Social Publication 0.3.0 community evidence source identity.
-          test "$(git hash-object node_modules/@red-cup-engineering/social-publication-services-section/src/community-evidence.mjs)" = "2d54cbdb0ee26cb1939625cf326c80ea8b89a5e9"
+          assert_source_blob node_modules/@red-cup-engineering/social-publication-services-section/src/community-evidence.mjs 2d54cbdb0ee26cb1939625cf326c80ea8b89a5e9
           node --test test/signcraft-native-integration.test.mjs test/community-work-order.test.mjs

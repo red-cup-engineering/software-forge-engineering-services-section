@@ -49,9 +49,12 @@ imagined semiotic step, nor can it manufacture a GitHub authorization.
 consumer, source pin and the intermediate Git Forge custody have independent
 receiving. Creating a second Gitlink, moving/deleting the existing one, or
 claiming a published installed package is deliberately not part of this
-source-only candidate. The current source declares `0.3.0-dev.0` for
+source-only candidate. The current source manifest declares `0.3.0` for
 `registry.561.group` under the non-default `next` tag, with SignCraft
-`0.6.1-dev.508` and Social Publication `0.3.0-dev.0`. Its prepublish gate runs
+`0.6.2` and Social Publication `0.3.0`. Their current published dependency
+closure requires Node 24.2 or later. The integration gate checks the exact
+declared dependency versions and source-owned Git blob identities for its
+consumed SignCraft and Social Publication modules. Its prepublish gate runs
 the pure contract and both native integration suites. Registry publication,
 consumer installation and beneficiary receiving require their own receipts;
 the presence of this source does not establish those events. Run
