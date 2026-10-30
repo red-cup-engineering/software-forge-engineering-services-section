@@ -74,11 +74,16 @@ jobs:
             commitSha:'b'.repeat(40),sourceRef:'source-receiving'}};
           const source={synthesis,signcraftSource:{repository:'red-cup-engineering/signcraft',
             commitSha:'a'.repeat(40),exportPath:'./inference/generate'},workRef:'ni:///sha-256;original-work',artifact};
+          const selection={workRef:source.workRef,signcraftSource:source.signcraftSource,artifact:{
+            path:artifact.path,contentSha256:createHash('sha256').update(artifact.content).digest('hex'),
+            producer:artifact.producer}};
           const original=forgeSourceCandidate(source);
-          assert.deepEqual(qualifyForgeSourceCandidate(structuredClone(original)),original);
+          assert.deepEqual(qualifyForgeSourceCandidate(structuredClone(original),selection),original);
           assert.equal(original.artifact.contentSha256,createHash('sha256').update(original.artifact.content).digest('hex'));
           const changed=structuredClone(original);changed.receiving.beneficiary='accepted';
-          assert.throws(()=>qualifyForgeSourceCandidate(changed),TypeError);
+          assert.throws(()=>qualifyForgeSourceCandidate(changed,selection),TypeError);
+          const retagged=structuredClone(original);retagged.artifact.producer.sourceRef='not-the-selected-maker';
+          assert.throws(()=>qualifyForgeSourceCandidate(retagged,selection),TypeError);
           assert.deepEqual(original.effects,[]);
           console.log('PACKED_FORGE_CONSUMER_RECEIVED: genuine artifact import, replay and adverse control');
           NODE

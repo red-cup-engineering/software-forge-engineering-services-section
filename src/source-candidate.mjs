@@ -121,14 +121,31 @@ export function forgeSourceCandidate(input) {
 /** Replay a transported provisional candidate using the ORIGINAL Forge maker.
  * This is an exact source/shape readback, not an independent source checkout,
  * an authorization, an installed artifact, or the beneficiary's assent.
+ * A separate original Work/Code/source selection is REQUIRED; a carrier cannot
+ * authenticate its own source declarations or confer rights by replaying them.
  * A forged receiving verdict, extra field, altered source byte or moved digest
  * cannot be smuggled through the Git boundary as an alleged maker result. */
-export function qualifyForgeSourceCandidate(candidate) {
+export function qualifyForgeSourceCandidate(candidate, sourceSelection) {
   const received = retainedCarrier(candidate);
+  const selected = retainedCarrier(sourceSelection);
   if (!only(received,["kind","admission","workRef","signcraft","artifact","receiving","effects"]) ||
       received.kind !== "software-forge.source-candidate.v1" ||
       !plain(received.signcraft) || !plain(received.artifact))
     throw new TypeError("original Forge source candidate required");
+  // A syntactically valid but substituted commit or Code source reference
+  // cannot be detected by re-reading only the untrusted candidate. Compare
+  // against the original Work/Source selection supplied independently by
+  // the consumer's actual custody/receiving authority, never from candidate.
+  if (!only(selected,["workRef","signcraftSource","artifact"]) ||
+      !only(selected.artifact,["path","contentSha256","producer"]) ||
+      !isDeepStrictEqual(selected,{
+        workRef:received.workRef,
+        signcraftSource:received.signcraft.source,
+        artifact:{path:received.artifact.path,
+          contentSha256:received.artifact.contentSha256,
+          producer:received.artifact.producer}
+      }))
+    throw new TypeError("Forge candidate differs from the independently selected original Work and source");
   const replayed = forgeSourceCandidate({
     synthesis:received.signcraft.construction,
     signcraftSource:received.signcraft.source,

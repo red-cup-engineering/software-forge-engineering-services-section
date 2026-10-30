@@ -95,12 +95,14 @@ source records are refused without running them. Forge retains its distinct
 construction depth/node/size limits, source shape, declared Work, code bytes
 and original producer conditions.
 
-`qualifyForgeSourceCandidate(transported)` replays an untrusted source
-proposal against the original Forge maker and requires the **exact** returned
-candidate, digest, declared source pins and unreceived statuses. Extra
-authority claims, changed source, forged receiving, altered bytes or missing
-evidence refuse. Git Forge can use this original source-owner reader to
-eliminate its own duplicated upstream candidate validator. This is still
-**provisional source-contract replay**: neither actual source checkout nor
+`qualifyForgeSourceCandidate(transported, sourceSelection)` replays the
+untrusted source proposal under an **independently selected original Work,
+SignCraft source revision and Code producer plus artifact digest**. It is
+not allowed to derive that selection from the candidate being checked: even
+an otherwise valid commitSha or recomputed hash cannot authenticate itself.
+Extra authority claims, inconsistent source, forged receiving, altered bytes,
+missing evidence and substitutions against the selected original refuse. Git Forge can use this original source-owner reader to
+eliminate its own duplicated upstream candidate validator. This selection is only a comparison condition and is NOT proof of who issued
+it. This is still **provisional source-contract replay**: neither actual source checkout nor
 independent Stage Proof, immutable registry publication, authorized Git write
 or customer acceptance is established.

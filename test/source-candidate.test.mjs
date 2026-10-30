@@ -22,6 +22,15 @@ const input=()=>({
     producer:{repository:"red-cup-engineering/computer-code-engineering-services-section",
       commitSha:b,sourceRef:"source-fabrication:example"}}
 });
+/** Expected source selection is held independently of the candidate under test,
+ * by its original Work and producer source. Replayed labels cannot replace it. */
+const selectedSource = x => ({
+  workRef:x.workRef,signcraftSource:x.signcraftSource,
+  artifact:{path:x.artifact.path,
+    contentSha256:createHash("sha256").update(x.artifact.content,"utf8").digest("hex"),
+    producer:x.artifact.producer}
+});
+
 test("genuine SignCraft result shape binds the original provisional artifact, not authority",()=>{
   const x=input(),snapshot=structuredClone(x),out=forgeSourceCandidate(x);
   assert.equal(out.kind,"software-forge.source-candidate.v1");
@@ -151,7 +160,8 @@ test("supplier identity and root input getters cannot run or change the source p
 });
 test("existing upstream retention produces deep immutable bytes without text normalization",()=>{
   const x=input();x.synthesis.note="uncomposed e\u0301 retained";
-  const result=forgeSourceCandidate(x),receipt=qualifyForgeSourceCandidate(result);
+  const selection=selectedSource(x);
+  const result=forgeSourceCandidate(x),receipt=qualifyForgeSourceCandidate(result,selection);
   assert.deepEqual(receipt,result);
   assert.equal(result.signcraft.construction.note,x.synthesis.note);
   assert.equal(Object.isFrozen(result.signcraft.construction.steps[0].question),true);
@@ -161,11 +171,13 @@ test("existing upstream retention produces deep immutable bytes without text nor
   assert.equal(result.artifact.contentSha256,createHash("sha256").update(result.artifact.content,"utf8").digest("hex"));
 });
 test("transported candidate is replayed at the original owner, never re-certified by its label",()=>{
-  const valid=forgeSourceCandidate(input());
-  const replay=qualifyForgeSourceCandidate(structuredClone(valid));
+  const original=input(),selection=selectedSource(original);
+  const valid=forgeSourceCandidate(original);
+  const replay=qualifyForgeSourceCandidate(structuredClone(valid),selection);
   assert.deepEqual(replay,valid);
   for(const change of [
     p=>{p.artifact.content="export const modified=true;\n";},
+    p=>{p.artifact.content="export const modified=true;\n";p.artifact.contentSha256=createHash("sha256").update(p.artifact.content).digest("hex");},
     p=>{p.artifact.contentSha256="0".repeat(64);},
     p=>{p.receiving.installedConsumer="received";},
     p=>{p.signcraft.construction.openRequirements.push("unsettled");},
@@ -177,14 +189,16 @@ test("transported candidate is replayed at the original owner, never re-certifie
     p=>{delete p.receiving.beneficiary;}
   ]){
     const received=structuredClone(valid);change(received);
-    assert.throws(()=>qualifyForgeSourceCandidate(received),TypeError);
+    assert.throws(()=>qualifyForgeSourceCandidate(received,selection),TypeError);
   }
 });
 test("replay refusal never invokes an executable accessor or erases the true source",()=>{
-  const x=forgeSourceCandidate(input());let count=0;
+  const original=input(),selection=selectedSource(original);
+  const x=forgeSourceCandidate(original);let count=0;
   const received=structuredClone(x);
   Object.defineProperty(received.signcraft.construction,"complete",{enumerable:true,get(){count++;return true;}});
-  assert.throws(()=>qualifyForgeSourceCandidate(received),/data properties, never accessors/u);
+  assert.throws(()=>qualifyForgeSourceCandidate(received,selection),/data properties, never accessors/u);
   assert.equal(count,0);
-  assert.equal(qualifyForgeSourceCandidate(x).receiving.beneficiary,"not-observed");
+  assert.equal(qualifyForgeSourceCandidate(x,selection).receiving.beneficiary,"not-observed");
+  assert.throws(()=>qualifyForgeSourceCandidate(x),TypeError,"without separate source selection, original attribution is not qualified");
 });
