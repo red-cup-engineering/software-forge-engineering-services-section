@@ -1,4 +1,4 @@
-name: Forge source and SignCraft runtime contracts
+name: Forge source and upstream-carrier receiving
 on:
   pull_request:
     paths:
@@ -12,54 +12,30 @@ concurrency:
   group: forge-source-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  source-contract:
+  source-and-installed-receiving:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
-      - name: Read exact source
+      - name: Read exact source without retaining credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Use Node 24
+      - name: Use the supplier-compatible Node runtime
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: '24'
-      - name: Run original pure contract tests
-        run: |
-          npm run check
-          npm test
-          npm pack --dry-run --ignore-scripts
-
-  published-signcraft-integration:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - name: Read exact consumer source
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - name: Use Node 24
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-        with:
-          node-version: '24'
-      - name: Resolve exact SignCraft and Social Publication suppliers
+      - name: Install source-declared exact upstream suppliers once
         run: |
           set -euo pipefail
-          npm view @red-cup-engineering/signcraft@0.6.2 version --registry=https://registry.561.group/
-          npm view @red-cup-engineering/social-publication-services-section@0.3.0 version --registry=https://registry.561.group/
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock --registry=https://registry.561.group/
-          node -e "const m=require('./package.json'); const p=require('./node_modules/@red-cup-engineering/signcraft/package.json'); if(p.name!=='@red-cup-engineering/signcraft'||p.version!==m.dependencies[p.name]) throw new Error('SignCraft installed package does not match the declared dependency')"
-          node -e "const m=require('./package.json'); const p=require('./node_modules/@red-cup-engineering/social-publication-services-section/package.json'); if(p.name!=='@red-cup-engineering/social-publication-services-section'||p.version!==m.dependencies[p.name]) process.exit(1)"
-          # Source-owned Git blobs independently checked against the original
-          # SignCraft 0.6.2 release-source commits (43cc43c and b0af25e).
-          # Keep exact-byte checks: package version alone is not provenance.
-          # npm's gitHead metadata may be absent: Git tree bytes, not a
-          # self-reported publisher field, are the original source assay.
+          npm ls --omit=dev --depth=0
+          # These original Git object identities were independently checked
+          # against SignCraft 0.6.2 source and Social Publication 0.3.0.
           assert_source_blob() {
             local file="$1" expected="$2" observed
             observed="$(git hash-object "$file")"
             if [ "$observed" != "$expected" ]; then
-              printf 'SOURCE_IDENTITY_MISMATCH %s expected=%s observed=%s\\n' "$file" "$expected" "$observed" >&2
+              printf 'SOURCE_IDENTITY_MISMATCH %s expected=%s observed=%s\n' "$file" "$expected" "$observed" >&2
               return 1
             fi
           }
@@ -67,6 +43,42 @@ jobs:
           assert_source_blob node_modules/@red-cup-engineering/signcraft/src/inference/kernel.mjs d8445885b17b3b4f4d711e6844a6a7089e27e02b
           assert_source_blob node_modules/@red-cup-engineering/signcraft/src/inference/nuclei.mjs cfb08de27bfb51f91f91fa64cde138da3a4fc4cc
           assert_source_blob node_modules/@red-cup-engineering/signcraft/src/cell.mjs 40d7d947430ad944f9baa2172c34cfceb1abdd41
-          # Original Social Publication 0.3.0 community evidence source identity.
           assert_source_blob node_modules/@red-cup-engineering/social-publication-services-section/src/community-evidence.mjs 2d54cbdb0ee26cb1939625cf326c80ea8b89a5e9
-          node --test test/signcraft-native-integration.test.mjs test/community-work-order.test.mjs
+      - name: Run original owner and actual upstream consumer contracts
+        run: |
+          set -euo pipefail
+          npm run check
+          npm test
+          npm run test:signcraft-integration
+          npm run test:community
+      - name: Qualify actual packed artifact through a distinct installed consumer
+        run: |
+          set -euo pipefail
+          receiving="$RUNNER_TEMP/forge-receiving"
+          mkdir -p "$receiving/consumer" "$receiving/archives"
+          npm pack --ignore-scripts --pack-destination "$receiving/archives" .
+          set -- "$receiving"/archives/*.tgz
+          test "$#" -eq 1 && test -f "$1"
+          npm install --prefix "$receiving/consumer" --ignore-scripts --no-audit --no-fund --no-package-lock --registry=https://registry.561.group/ "$1"
+          cd "$receiving/consumer"
+          npm ls --omit=dev --depth=0
+          node --input-type=module <<'NODE'
+          import {forgeSourceCandidate,qualifyForgeSourceCandidate} from '@red-cup-engineering/software-forge-services-section/source-candidate';
+          import {createHash} from 'node:crypto';
+          import assert from 'node:assert/strict';
+          const synthesis={kind:'signcraft.semioticSynthesis.v1',admissionLevel:'counterfactual',object:'packed-source',
+            requirements:['source'],exclusions:[],complete:true,openRequirements:[],violatedExclusions:[],
+            searchTruncated:false,statesExplored:1,steps:[],continuationEnergy:0,projectedReadings:[]};
+          const artifact={path:'src/qualified.mjs',content:'export const tested=true;\n',producer:{
+            repository:'red-cup-engineering/computer-code-engineering-services-section',
+            commitSha:'b'.repeat(40),sourceRef:'source-receiving'}};
+          const source={synthesis,signcraftSource:{repository:'red-cup-engineering/signcraft',
+            commitSha:'a'.repeat(40),exportPath:'./inference/generate'},workRef:'ni:///sha-256;original-work',artifact};
+          const original=forgeSourceCandidate(source);
+          assert.deepEqual(qualifyForgeSourceCandidate(structuredClone(original)),original);
+          assert.equal(original.artifact.contentSha256,createHash('sha256').update(original.artifact.content).digest('hex'));
+          const changed=structuredClone(original);changed.receiving.beneficiary='accepted';
+          assert.throws(()=>qualifyForgeSourceCandidate(changed),TypeError);
+          assert.deepEqual(original.effects,[]);
+          console.log('PACKED_FORGE_CONSUMER_RECEIVED: genuine artifact import, replay and adverse control');
+          NODE
