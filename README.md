@@ -52,14 +52,12 @@ claiming a published installed package is deliberately not part of this
 source-only candidate. The current source manifest declares `0.3.0` for
 `registry.561.group` under the non-default `next` tag, with SignCraft
 `0.6.2` and Social Publication `0.3.0`. Their current published dependency
-closure requires Node 24.2 or later. The integration gate checks the exact
-declared dependency versions and source-owned Git blob identities for its
-consumed SignCraft and Social Publication modules. Its prepublish gate runs
-the pure contract and both native integration suites. Registry publication,
-consumer installation and beneficiary receiving require their own receipts;
-the presence of this source does not establish those events. Run
-`node --test test/source-candidate.test.mjs` for the dependency-free contract;
-the remaining tests require the exact declared suppliers.
+closure requires Node 24.2 or later. The native receiving job installs
+the source-declared upstream dependencies once, checks source-owned Git blob
+identities, runs all original owner and integration suites, packs the actual
+artifact, and clean-installs it in an independent package consumer. Source
+tests now require the original SignCell carrier via SignCraft. This is not
+registry publication, deployment, a Git effect or beneficiary settlement.
 
 The original corporate Work is
 `ni:///sha-256;N2B0dn3jHK7-wH7j6URwNpu2C0ofnY9zWH6saAYxI7w`.
@@ -85,3 +83,26 @@ Code owner's `renderJsonSchemaModule`, with its exact producing commit, source
 blob and output digest retained. It exercises source identity and construction
 without claiming that the artifact has been installed or that a community
 outcome has occurred. See [the operation contract](docs/community-source-work.md).
+
+
+## Use the original inert carrier and replay the actual Forge contract
+
+The source-owned SignCell carrier, exported via SignCraft's `./cell`,
+already provides inert-source admission and detached, deeply immutable
+carriers. `forgeSourceCandidate(input)` uses it rather than a second
+`structuredClone`/freeze implementation. Executable getters and unsupported
+source records are refused without running them. Forge retains its distinct
+construction depth/node/size limits, source shape, declared Work, code bytes
+and original producer conditions.
+
+`qualifyForgeSourceCandidate(transported, sourceSelection)` replays the
+untrusted source proposal under an **independently selected original Work,
+SignCraft source revision and Code producer plus artifact digest**. It is
+not allowed to derive that selection from the candidate being checked: even
+an otherwise valid commitSha or recomputed hash cannot authenticate itself.
+Extra authority claims, inconsistent source, forged receiving, altered bytes,
+missing evidence and substitutions against the selected original refuse. Git Forge can use this original source-owner reader to
+eliminate its own duplicated upstream candidate validator. This selection is only a comparison condition and is NOT proof of who issued
+it. This is still **provisional source-contract replay**: neither actual source checkout nor
+independent Stage Proof, immutable registry publication, authorized Git write
+or customer acceptance is established.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {forgeSourceCandidate} from "../src/source-candidate.mjs";
+import {forgeSourceCandidate,qualifyForgeSourceCandidate} from "../src/source-candidate.mjs";
 import {createHash} from "node:crypto";
 
 const a="a".repeat(40), b="b".repeat(40);
@@ -22,6 +22,15 @@ const input=()=>({
     producer:{repository:"red-cup-engineering/computer-code-engineering-services-section",
       commitSha:b,sourceRef:"source-fabrication:example"}}
 });
+/** Expected source selection is held independently of the candidate under test,
+ * by its original Work and producer source. Replayed labels cannot replace it. */
+const selectedSource = x => ({
+  workRef:x.workRef,signcraftSource:x.signcraftSource,
+  artifact:{path:x.artifact.path,
+    contentSha256:createHash("sha256").update(x.artifact.content,"utf8").digest("hex"),
+    producer:x.artifact.producer}
+});
+
 test("genuine SignCraft result shape binds the original provisional artifact, not authority",()=>{
   const x=input(),snapshot=structuredClone(x),out=forgeSourceCandidate(x);
   assert.equal(out.kind,"software-forge.source-candidate.v1");
@@ -107,59 +116,89 @@ test("source candidate permanently retains every nested SignCraft step and proje
 
 test("nonportable, cyclic, nonfinite and unbounded source constructions refuse before Git custody",()=>{
   const exotic=input();exotic.synthesis.steps[0].question.arbitrary=new Map([["hidden","unreplayable"]]);
-  assert.throws(()=>forgeSourceCandidate(exotic),/bounded acyclic portable value/u);
+  assert.throws(()=>forgeSourceCandidate(exotic),/ordinary data records|unsupported semiotic|inert source/u);
   const cyclic=input();cyclic.synthesis.steps[0].question.loop=cyclic.synthesis.steps[0].question;
-  assert.throws(()=>forgeSourceCandidate(cyclic),/bounded acyclic portable value/u);
+  assert.throws(()=>forgeSourceCandidate(cyclic),/cyclic/u);
   const nonfinite=input();nonfinite.synthesis.projectedReadings[0].reading=Infinity;
-  assert.throws(()=>forgeSourceCandidate(nonfinite),/bounded acyclic portable value/u);
+  assert.throws(()=>forgeSourceCandidate(nonfinite),/semiotic source|finite/u);
   const tooLarge=input();tooLarge.synthesis.note="x".repeat(260_000);
   assert.throws(()=>forgeSourceCandidate(tooLarge),/bounded portable source cut/u);
   const excessiveDepth=input();let part=excessiveDepth.synthesis.steps[0].question;
   for(let i=0;i<40;i++){part.more={};part=part.more;}
-  assert.throws(()=>forgeSourceCandidate(excessiveDepth),/bounded acyclic portable value/u);
+  assert.throws(()=>forgeSourceCandidate(excessiveDepth),/bounded portable source profile/u);
   const normal=input();assert.equal(forgeSourceCandidate(normal).kind,"software-forge.source-candidate.v1");
 });
 
 
-test("a completed SignCraft assertion is validated and retained from one immutable reading",()=>{
+// The previous local snapshot patch accepted accessors after one getter read.
+// The already-established original Content Address admission instead refuses
+// executable source fields *before invoking them*: no getter is a source value.
+test("upstream inert-source law refuses mutable SignCraft completion without running its getter",()=>{
   const x=input();let reads=0;
-  Object.defineProperty(x.synthesis,"complete",{enumerable:true,get(){return ++reads <= 2;}});
-  const out=forgeSourceCandidate(x);
-  assert.equal(reads,1,"do not validate mutable source independently from the retained carrier");
-  assert.equal(out.kind,"software-forge.source-candidate.v1");
-  assert.equal(out.signcraft.construction.complete,true);
-  assert.equal(Object.isFrozen(out.signcraft.construction),true);
-  assert.deepEqual(out.effects,[]);
+  Object.defineProperty(x.synthesis,"complete",{enumerable:true,get(){reads++;return true;}});
+  assert.throws(()=>forgeSourceCandidate(x),/data properties, never accessors/u);
+  assert.equal(reads,0);
 });
-
-test("an incomplete source reading cannot become a complete candidate on repeated access",()=>{
+test("upstream inert-source law refuses changing artifact content before hashing",()=>{
   const x=input();let reads=0;
-  Object.defineProperty(x.synthesis,"complete",{enumerable:true,get(){return ++reads !== 1;}});
-  const out=forgeSourceCandidate(x);
-  assert.equal(reads,1);
-  assert.equal(out.kind,"software-forge.refusal.v1");
-  assert.equal(out.code,"SIGNCRAFT_CONSTRUCTION_NOT_COMPLETE");
-  assert.deepEqual(out.effects,[]);
+  Object.defineProperty(x.artifact,"content",{enumerable:true,get(){reads++;return "export const wrong=true;\n";}});
+  assert.throws(()=>forgeSourceCandidate(x),/data properties, never accessors/u);
+  assert.equal(reads,0);
 });
-
-test("source digest commits the exact retained artifact bytes even when caller getters change",()=>{
-  const x=input();let reads=0;
-  const initial="export const qualified = true;\n", subsequent="export const qualified = false;\n";
-  Object.defineProperty(x.artifact,"content",{enumerable:true,get(){return ++reads === 1 ? initial : subsequent;}});
-  const out=forgeSourceCandidate(x);
-  assert.equal(reads,1);
-  assert.equal(out.artifact.content,initial);
-  assert.equal(out.artifact.contentSha256,
-    createHash("sha256").update(out.artifact.content,"utf8").digest("hex"));
+test("supplier identity and root input getters cannot run or change the source pin",()=>{
+  for (const level of ["signcraftSource","artifact"]){
+    const x=input();let reads=0;
+    const owner=level==="artifact"?x.artifact.producer:x.signcraftSource;
+    Object.defineProperty(owner,"commitSha",{enumerable:true,get(){reads++;return "a".repeat(40);}});
+    assert.throws(()=>forgeSourceCandidate(x),/data properties, never accessors/u);
+    assert.equal(reads,0);
+  }
+  const root=input();let reads=0;
+  Object.defineProperty(root,"workRef",{enumerable:true,get(){reads++;return "fake-grant";}});
+  assert.throws(()=>forgeSourceCandidate(root),/data properties, never accessors/u);
+  assert.equal(reads,0);
 });
-
-test("the returned supplier and maker revisions are exactly the revisions validated",()=>{
-  const x=input();let sourceReads=0,makerReads=0;
-  Object.defineProperty(x.signcraftSource,"commitSha",{enumerable:true,get(){return ++sourceReads === 1 ? a : "unqualified";}});
-  Object.defineProperty(x.artifact.producer,"commitSha",{enumerable:true,get(){return ++makerReads === 1 ? b : "unqualified";}});
-  const out=forgeSourceCandidate(x);
-  assert.equal(sourceReads,1);assert.equal(makerReads,1);
-  assert.equal(out.signcraft.source.commitSha,a);
-  assert.equal(out.artifact.producer.commitSha,b);
-  assert.deepEqual(out.effects,[]);
+test("existing upstream retention produces deep immutable bytes without text normalization",()=>{
+  const x=input();x.synthesis.note="uncomposed e\u0301 retained";
+  const selection=selectedSource(x);
+  const result=forgeSourceCandidate(x),receipt=qualifyForgeSourceCandidate(result,selection);
+  assert.deepEqual(receipt,result);
+  assert.equal(result.signcraft.construction.note,x.synthesis.note);
+  assert.equal(Object.isFrozen(result.signcraft.construction.steps[0].question),true);
+  assert.equal(Object.isFrozen(result.artifact.producer),true);
+  assert.equal(Object.isFrozen(result.receiving),true);
+  assert.equal(Object.isFrozen(result.effects),true);
+  assert.equal(result.artifact.contentSha256,createHash("sha256").update(result.artifact.content,"utf8").digest("hex"));
+});
+test("transported candidate is replayed at the original owner, never re-certified by its label",()=>{
+  const original=input(),selection=selectedSource(original);
+  const valid=forgeSourceCandidate(original);
+  const replay=qualifyForgeSourceCandidate(structuredClone(valid),selection);
+  assert.deepEqual(replay,valid);
+  for(const change of [
+    p=>{p.artifact.content="export const modified=true;\n";},
+    p=>{p.artifact.content="export const modified=true;\n";p.artifact.contentSha256=createHash("sha256").update(p.artifact.content).digest("hex");},
+    p=>{p.artifact.contentSha256="0".repeat(64);},
+    p=>{p.receiving.installedConsumer="received";},
+    p=>{p.signcraft.construction.openRequirements.push("unsettled");},
+    p=>{p.signcraft.source.commitSha="b".repeat(40);},
+    p=>{p.effects.push({kind:"git.write"});},
+    p=>{p.approved=true;},
+    p=>{p.receiving.independentAcceptance="approved";},
+    p=>{p.artifact.producer.sourceRef="forged-source-ref";},
+    p=>{delete p.receiving.beneficiary;}
+  ]){
+    const received=structuredClone(valid);change(received);
+    assert.throws(()=>qualifyForgeSourceCandidate(received,selection),TypeError);
+  }
+});
+test("replay refusal never invokes an executable accessor or erases the true source",()=>{
+  const original=input(),selection=selectedSource(original);
+  const x=forgeSourceCandidate(original);let count=0;
+  const received=structuredClone(x);
+  Object.defineProperty(received.signcraft.construction,"complete",{enumerable:true,get(){count++;return true;}});
+  assert.throws(()=>qualifyForgeSourceCandidate(received,selection),/data properties, never accessors/u);
+  assert.equal(count,0);
+  assert.equal(qualifyForgeSourceCandidate(x,selection).receiving.beneficiary,"not-observed");
+  assert.throws(()=>qualifyForgeSourceCandidate(x),TypeError,"without separate source selection, original attribution is not qualified");
 });
