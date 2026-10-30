@@ -119,3 +119,47 @@ test("nonportable, cyclic, nonfinite and unbounded source constructions refuse b
   assert.throws(()=>forgeSourceCandidate(excessiveDepth),/bounded acyclic portable value/u);
   const normal=input();assert.equal(forgeSourceCandidate(normal).kind,"software-forge.source-candidate.v1");
 });
+
+
+test("a completed SignCraft assertion is validated and retained from one immutable reading",()=>{
+  const x=input();let reads=0;
+  Object.defineProperty(x.synthesis,"complete",{enumerable:true,get(){return ++reads <= 2;}});
+  const out=forgeSourceCandidate(x);
+  assert.equal(reads,1,"do not validate mutable source independently from the retained carrier");
+  assert.equal(out.kind,"software-forge.source-candidate.v1");
+  assert.equal(out.signcraft.construction.complete,true);
+  assert.equal(Object.isFrozen(out.signcraft.construction),true);
+  assert.deepEqual(out.effects,[]);
+});
+
+test("an incomplete source reading cannot become a complete candidate on repeated access",()=>{
+  const x=input();let reads=0;
+  Object.defineProperty(x.synthesis,"complete",{enumerable:true,get(){return ++reads !== 1;}});
+  const out=forgeSourceCandidate(x);
+  assert.equal(reads,1);
+  assert.equal(out.kind,"software-forge.refusal.v1");
+  assert.equal(out.code,"SIGNCRAFT_CONSTRUCTION_NOT_COMPLETE");
+  assert.deepEqual(out.effects,[]);
+});
+
+test("source digest commits the exact retained artifact bytes even when caller getters change",()=>{
+  const x=input();let reads=0;
+  const initial="export const qualified = true;\n", subsequent="export const qualified = false;\n";
+  Object.defineProperty(x.artifact,"content",{enumerable:true,get(){return ++reads === 1 ? initial : subsequent;}});
+  const out=forgeSourceCandidate(x);
+  assert.equal(reads,1);
+  assert.equal(out.artifact.content,initial);
+  assert.equal(out.artifact.contentSha256,
+    createHash("sha256").update(out.artifact.content,"utf8").digest("hex"));
+});
+
+test("the returned supplier and maker revisions are exactly the revisions validated",()=>{
+  const x=input();let sourceReads=0,makerReads=0;
+  Object.defineProperty(x.signcraftSource,"commitSha",{enumerable:true,get(){return ++sourceReads === 1 ? a : "unqualified";}});
+  Object.defineProperty(x.artifact.producer,"commitSha",{enumerable:true,get(){return ++makerReads === 1 ? b : "unqualified";}});
+  const out=forgeSourceCandidate(x);
+  assert.equal(sourceReads,1);assert.equal(makerReads,1);
+  assert.equal(out.signcraft.source.commitSha,a);
+  assert.equal(out.artifact.producer.commitSha,b);
+  assert.deepEqual(out.effects,[]);
+});

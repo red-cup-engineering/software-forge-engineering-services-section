@@ -51,7 +51,13 @@ function retainConstruction(original) {
   return copy;
 }
 
-export function forgeSourceCandidate({synthesis, signcraftSource, workRef, artifact}) {
+export function forgeSourceCandidate({synthesis: sourceSynthesis, signcraftSource: sourceSigncraft,
+  workRef, artifact: sourceArtifact}) {
+  // Admit exactly the values that are retained. Calling authored getters again
+  // after checking them can change completion, source identity or code bytes.
+  const synthesis = plain(sourceSynthesis) ? retainConstruction(sourceSynthesis) : sourceSynthesis;
+  const signcraftSource = plain(sourceSigncraft) ? structuredClone(sourceSigncraft) : sourceSigncraft;
+  const artifact = plain(sourceArtifact) ? structuredClone(sourceArtifact) : sourceArtifact;
   if (!only(signcraftSource,["repository","commitSha","exportPath"]) ||
       signcraftSource.repository !== "red-cup-engineering/signcraft" ||
       !SHA.test(signcraftSource.commitSha) ||
@@ -96,12 +102,11 @@ export function forgeSourceCandidate({synthesis, signcraftSource, workRef, artif
       !named(artifact.producer.sourceRef))
     throw new TypeError("source-authored code artifact and pinned producer required");
 
-  const constructed = retainConstruction(synthesis);
   return Object.freeze({
     kind:"software-forge.source-candidate.v1",
     admission:"provisional-source-candidate",
     workRef,
-    signcraft:Object.freeze({source:Object.freeze({...signcraftSource}),construction:Object.freeze(constructed)}),
+    signcraft:Object.freeze({source:Object.freeze({...signcraftSource}),construction:synthesis}),
     artifact:Object.freeze({path:artifact.path,content:artifact.content,
       contentSha256:createHash("sha256").update(artifact.content,"utf8").digest("hex"),
       producer:Object.freeze({...artifact.producer})}),
