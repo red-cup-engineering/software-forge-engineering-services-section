@@ -20,10 +20,10 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Use Node 22
+      - name: Use Node 24
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
-          node-version: '22'
+          node-version: '24'
       - name: Run original pure contract tests
         run: |
           npm run check
@@ -38,23 +38,25 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Use Node 22
+      - name: Use Node 24
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
-          node-version: '22'
+          node-version: '24'
       - name: Resolve exact SignCraft and Social Publication suppliers
         run: |
           set -euo pipefail
-          npm view @red-cup-engineering/signcraft@0.6.1-dev.508 version --registry=https://registry.561.group/
-          npm view @red-cup-engineering/social-publication-services-section@0.3.0-dev.0 version --registry=https://registry.561.group/
+          npm view @red-cup-engineering/signcraft@0.6.2 version --registry=https://registry.561.group/
+          npm view @red-cup-engineering/social-publication-services-section@0.3.0 version --registry=https://registry.561.group/
           npm install --ignore-scripts --no-audit --no-fund --no-package-lock --registry=https://registry.561.group/
-          node -e "const p=require('./node_modules/@red-cup-engineering/signcraft/package.json'); if(p.name!=='@red-cup-engineering/signcraft'||p.version!=='0.6.1-dev.508'||p.gitHead!=='0257d0b3719d95f3b4649610bd5839ccbd6e914d') process.exit(1)"
-          node -e "const p=require('./node_modules/@red-cup-engineering/social-publication-services-section/package.json'); if(p.name!=='@red-cup-engineering/social-publication-services-section'||p.version!=='0.3.0-dev.0') process.exit(1)"
-          # These Git blob OIDs were fetched from the exact SignCraft Git commit
-          # named by the original source-bound integration fixture. No private
-          # checkout, credential or source copy occurs on this public runner.
+          node -e "const m=require('./package.json'); const p=require('./node_modules/@red-cup-engineering/signcraft/package.json'); if(p.name!=='@red-cup-engineering/signcraft'||p.version!==m.dependencies[p.name]||!(/^[0-9a-f]{40}$/u.test(p.gitHead||''))) process.exit(1)"
+          node -e "const m=require('./package.json'); const p=require('./node_modules/@red-cup-engineering/social-publication-services-section/package.json'); if(p.name!=='@red-cup-engineering/social-publication-services-section'||p.version!==m.dependencies[p.name]) process.exit(1)"
+          # Source-owned Git blobs independently checked against the original
+          # SignCraft 0.6.2 release-source commits (43cc43c and b0af25e).
+          # Keep exact-byte checks: package version alone is not provenance.
           test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/inference/generate.mjs)" = "24ee356f70183024f9cf15d192162442a06ac287"
           test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/inference/kernel.mjs)" = "d8445885b17b3b4f4d711e6844a6a7089e27e02b"
           test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/inference/nuclei.mjs)" = "cfb08de27bfb51f91f91fa64cde138da3a4fc4cc"
           test "$(git hash-object node_modules/@red-cup-engineering/signcraft/src/cell.mjs)" = "40d7d947430ad944f9baa2172c34cfceb1abdd41"
+          # Original Social Publication 0.3.0 community evidence source identity.
+          test "$(git hash-object node_modules/@red-cup-engineering/social-publication-services-section/src/community-evidence.mjs)" = "2d54cbdb0ee26cb1939625cf326c80ea8b89a5e9"
           node --test test/signcraft-native-integration.test.mjs test/community-work-order.test.mjs
